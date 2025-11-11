@@ -1,14 +1,10 @@
-variable "application_name" {
-  type = string
-  description = "The name of the application"
+variable "name" {
+  type        = string
+  description = "The name of the resource group"
 }
 
 variable "location" {
-  type = string
-  description = "The location for the resource group" 
+  type        = string
+  description = "The location for the resource group"
 }
 
-variable "environment" {
-  type = string
-  description = "application environment"
-}
