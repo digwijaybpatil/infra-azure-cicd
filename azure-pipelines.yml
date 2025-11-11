@@ -25,12 +25,9 @@ variables:
   - name: TF_BACKEND_CONTAINER_NAME
     value: 'tfstate'
 
-  # dynamically set environment based on branch
+  # Dynamically set environment based on branch (compile-time safe syntax)
   - name: TF_ENVIRONMENT
-    value: "$[eq(variables['Build.SourceBranch'], 'refs/heads/main') ? 'prod' : 'dev']"
-
-  - name: TF_BACKEND_KEY
-    value: '$(TF_ENVIRONMENT).terraform.tfstate'
+    value: ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }} 'prod' ${{ else }} 'dev'
 
   # Azure service connection name (used in init)
   - name: AZURE_SERVICE_CONNECTION
