@@ -36,7 +36,7 @@ variable "soft_delete_retention_days" {
   default     = 90  # ✅ Azure recommends 90 days for compliance
 }
 
-variable "enable_rbac_authorization" {
+variable "rbac_authorization_enabled" {
   description = "Enable role-based access control for this Key Vault."
   type        = bool
   default     = true  # ✅ use RBAC instead of access policies for cleaner management

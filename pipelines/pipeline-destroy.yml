@@ -1,0 +1,76 @@
+# =============================================================
+# Terraform Destroy Pipeline
+# =============================================================
+
+trigger: none    # 🚫 never auto-run
+pr: none         # 🚫 no PR validation
+
+pool:
+  name: "Self-hosted-pool"
+
+parameters:
+  - name: environment
+    displayName: "Select Environment to Destroy"
+    type: string
+    default: "dev"
+    values:
+      - dev
+      - prod
+
+variables:
+  - group: terraform-secrets-dev
+
+  # backend config
+  - name: TF_BACKEND_RESOURCE_GROUP
+    value: "rg-digwi-terraform-remote"
+  - name: TF_BACKEND_STORAGE_ACCOUNT
+    value: "stgdigwiterraformstate"
+  - name: TF_BACKEND_CONTAINER_NAME
+    value: "tfstate"
+  - name: TF_BACKEND_KEY
+    value: "$(environment).terraform.tfstate"
+  - name: TF_VAR_FILE
+    value: "env/$(environment)/$(environment).tfvars"
+
+stages:
+  - stage: Destroy
+    displayName: "Terraform Destroy ($(environment))"
+    jobs:
+      - deployment: TerraformDestroy
+        displayName: "Terraform Destroy Job"
+        environment: "$(environment)"   # ✅ optional manual approval gate
+        pool:
+          name: "Self-hosted-pool"
+
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - pwsh: |
+                    Write-Host "Terraform Version:"
+                    terraform -version
+                    Write-Host "Azure CLI Version:"
+                    az --version
+                  displayName: "Check Versions"
+
+                - pwsh: |
+                    Write-Host "Terraform Init for $(environment)"
+                    terraform init `
+                      -backend-config="resource_group_name=$(TF_BACKEND_RESOURCE_GROUP)" `
+                      -backend-config="storage_account_name=$(TF_BACKEND_STORAGE_ACCOUNT)" `
+                      -backend-config="container_name=$(TF_BACKEND_CONTAINER_NAME)" `
+                      -backend-config="key=$(TF_BACKEND_KEY)"
+
+                    Write-Host "Planning destroy..."
+                    terraform plan -destroy -var-file="$(TF_VAR_FILE)" -out=tfplan
+
+                    Write-Host "Applying destroy plan..."
+                    terraform apply -auto-approve tfplan
+                  displayName: "Terraform Plan & Destroy"
+                  env:
+                    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+                    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+                    ARM_TENANT_ID: $(ARM_TENANT_ID)
+                    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
