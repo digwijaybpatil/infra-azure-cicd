@@ -14,23 +14,23 @@ module "vnet" {
 
 locals {
   subnets = {
-    bastion = cidrsubnet(var.vnet_address_space, 4, 0)
-    app     = cidrsubnet(var.vnet_address_space, 2, 1)
-    data    = cidrsubnet(var.vnet_address_space, 2, 2)
-    web     = cidrsubnet(var.vnet_address_space, 2, 3)
+    AzureBastionSubnet = cidrsubnet(var.vnet_address_space, 4, 0)
+    app                = cidrsubnet(var.vnet_address_space, 2, 1)
+    data               = cidrsubnet(var.vnet_address_space, 2, 2)
+    web                = cidrsubnet(var.vnet_address_space, 2, 3)
   }
 }
 
 module "snet" {
   source               = "./modules/azurerm_subnet"
   for_each             = local.subnets
-  name                 = "${each.key}-snet-${var.application_name}-${var.environment}"
+  name                 = each.key
   virtual_network_name = module.vnet.vnet_name
   resource_group_name  = module.rg.resource_group_name
   address_prefixes     = [each.value]
 }
 
-module "pip-bastion" {
+module "pip_bastion" {
   source              = "./modules/azurerm_public_ip"
   name                = "pip-bastion-${var.application_name}-${var.environment}"
   location            = module.rg.resource_group_location
@@ -54,4 +54,15 @@ module "nic-vm1" {
   resource_group_name = module.rg.resource_group_name
   subnet_id           = module.snet["app"].snet_id
 }
+
+module "bastion_host" {
+  source                = "./modules/azurerm_bastion_host"
+  name                  = "bastion-${var.application_name}-${var.environment}"
+  location              = module.rg.resource_group_location
+  resource_group_name   = module.rg.resource_group_name
+  ip_configuration_name = "bastion-ipconfig"
+  subnet_id             = module.snet["AzureBastionSubnet"].snet_id
+  public_ip_address_id  = module.pip_bastion.pip_id
+}
+
 
