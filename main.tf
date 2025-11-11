@@ -35,17 +35,23 @@ module "pip-bastion" {
   name                = "pip-bastion-${var.application_name}-${var.environment}"
   location            = module.rg.resource_group_location
   resource_group_name = module.rg.resource_group_name
-  allocation_method   = "Static"
-  sku                 = "Standard"
 }
 
-module "pip-vm" {
-  source              = "./modules/azurerm_public_ip"
-  name                = "pip-vm-${var.application_name}-${var.environment}"
+# module "pip-vm" {
+#   source              = "./modules/azurerm_public_ip"
+#   name                = "pip-vm-${var.application_name}-${var.environment}"
+#   location            = module.rg.resource_group_location
+#   resource_group_name = module.rg.resource_group_name
+#   allocation_method   = "Static"
+#   sku                 = "Standard"
+# }
+
+
+module "nic-vm1" {
+  source              = "./modules/azurerm_nic"
+  name                = "nic-vm1-${var.application_name}-${var.environment}"
   location            = module.rg.resource_group_location
   resource_group_name = module.rg.resource_group_name
-  allocation_method   = "Static"
-  sku                 = "Standard"
+  subnet_id           = module.snet["app"].snet_id
 }
-
 
