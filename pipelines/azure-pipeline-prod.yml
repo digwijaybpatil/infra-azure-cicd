@@ -71,6 +71,11 @@ stages:
 
                 - pwsh: |
                     Write-Host "Applying Terraform for Prod"
+
+                    # Change to artifact folder
+                    cd "$(Pipeline.Workspace)/terraform-plan"
+                    dir  # just to confirm tfplan is here
+
                     terraform init `
                       -backend-config="resource_group_name=rg-digwi-terraform-remote" `
                       -backend-config="storage_account_name=stgdigwiterraformstate" `
