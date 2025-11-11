@@ -30,4 +30,22 @@ module "snet" {
   address_prefixes     = [each.value]
 }
 
+module "pip-bastion" {
+  source              = "./modules/azurerm_public_ip"
+  name                = "pip-bastion-${var.application_name}-${var.environment}"
+  location            = module.rg.resource_group_location
+  resource_group_name = module.rg.resource_group_name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
+
+module "pip-vm" {
+  source              = "./modules/azurerm_public_ip"
+  name                = "pip-vm-${var.application_name}-${var.environment}"
+  location            = module.rg.resource_group_location
+  resource_group_name = module.rg.resource_group_name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
+
 
