@@ -1,0 +1,137 @@
+trigger: 
+  branches:
+    include:
+      - main
+      - develop
+
+pr:
+  branches:
+    include:
+      - develop
+
+pool: 
+  name: 'Self-hosted-pool'
+
+variables:
+  - group: terraform-secrets     # your secure SP credentials
+
+  # backend configuration
+  - name: TF_BACKEND_RESOURCE_GROUP
+    value: 'rg-digwi-terraform-remote'
+
+  - name: TF_BACKEND_STORAGE_ACCOUNT
+    value: 'stgdigwiterraformstate'
+
+  - name: TF_BACKEND_CONTAINER_NAME
+    value: 'tfstate'
+
+  # dynamically set environment based on branch
+  - name: TF_ENVIRONMENT
+    value: "$[eq(variables['Build.SourceBranch'], 'refs/heads/main') ? 'prod' : 'dev']"
+
+  - name: TF_BACKEND_KEY
+    value: '$(TF_ENVIRONMENT).terraform.tfstate'
+
+  # Azure service connection name (used in init)
+  - name: AZURE_SERVICE_CONNECTION
+    value: 'terraform-connection'
+
+  # Service principal authentication (from variable group)
+  - name: ARM_CLIENT_ID
+    value: $(ARM_CLIENT_ID)
+
+  - name: ARM_CLIENT_SECRET
+    value: $(ARM_CLIENT_SECRET)
+
+  - name: ARM_TENANT_ID
+    value: $(ARM_TENANT_ID)
+
+  - name: ARM_SUBSCRIPTION_ID
+    value: $(ARM_SUBSCRIPTION_ID)
+
+  # Working directory
+  - name: TF_WORKING_DIR
+    value: '.'
+
+stages:
+  - stage: InitAndPlan
+    displayName: "Terraform Init and Plan"
+
+    jobs:
+      - job: TerraformInitAndPlan
+        displayName: "Terraform Init and Plan Job"
+
+        steps:
+          - checkout: self 
+
+          - script: |
+              echo "Environment: $(TF_ENVIRONMENT)"
+              echo "Backend Key: $(TF_BACKEND_KEY)"
+            displayName: "Show Environment Context"
+ 
+          - script: |
+              terraform -version
+              az --version
+            displayName: "Check Terraform and Azure CLI Versions"
+
+          - script: |
+              echo "Terraform Init"
+              terraform init \
+              -backend-config="resource_group_name=$(TF_BACKEND_RESOURCE_GROUP)" \
+              -backend-config="storage_account_name=$(TF_BACKEND_STORAGE_ACCOUNT)" \
+              -backend-config="container_name=$(TF_BACKEND_CONTAINER_NAME)" \
+              -backend-config="key=$(TF_BACKEND_KEY)"
+
+              echo "Terraform Validate"
+              terraform validate
+
+              echo "Terraform Plan"
+              terraform plan -input=false \
+              -var-file="env/$(TF_ENVIRONMENT)/$(TF_ENVIRONMENT).tfvars" \
+              -out=tfplan
+            displayName: "Terraform Init, Validate & Plan"
+
+            env:
+              ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+              ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+              ARM_TENANT_ID: $(ARM_TENANT_ID)
+              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+
+          - publish: $(System.DefaultWorkingDirectory)/tfplan
+            artifact: terraform-plan
+            displayName: "Upload Terraform Plan Artifact"
+
+          
+  - stage: Apply
+    displayName: "Terraform Apply"
+    dependsOn: InitAndPlan
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')   # only run apply on main
+    jobs:
+      - deployment: TerraformApply
+        displayName: "Terraform Apply Stage"
+        environment: 'production'   # requires manual approval before running
+        pool:
+          name: 'Self-hosted-pool'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - script: |
+                    echo "Applying Terraform for $(TF_ENVIRONMENT)"
+                    terraform init \
+                      -backend-config="resource_group_name=$(TF_BACKEND_RESOURCE_GROUP)" \
+                      -backend-config="storage_account_name=$(TF_BACKEND_STORAGE_ACCOUNT)" \
+                      -backend-config="container_name=$(TF_BACKEND_CONTAINER_NAME)" \
+                      -backend-config="key=$(TF_BACKEND_KEY)"
+
+                    echo "Terraform Apply"
+                    terraform apply -auto-approve \
+                      -var-file="env/$(TF_ENVIRONMENT)/$(TF_ENVIRONMENT).tfvars"
+                  displayName: "Terraform Apply"
+                  env:
+                    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+                    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+                    ARM_TENANT_ID: $(ARM_TENANT_ID)
+                    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
