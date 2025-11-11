@@ -4,7 +4,7 @@ variable "name" {
 }
 
 variable "address_space" {
-    type        = string
+    type        = list(string)
     description = "The address space for the virtual network"
 }
 

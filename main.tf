@@ -7,9 +7,9 @@ module "rg" {
 module "vnet" {
   source              = "./modules/azurerm_virtual_network"
   name                = "vnet-${var.application_name}-${var.environment}"
-  address_space       = var.vnet_address_space
-  location            = var.primary_location
-  resource_group_name = module.rg.name
+  address_space       = [var.vnet_address_space]
+  location            = module.rg.resource_group_location
+  resource_group_name = module.rg.resource_group_name
 }
 
 locals {
@@ -25,9 +25,9 @@ module "snet" {
   source               = "./modules/azurerm_subnet"
   for_each             = local.subnets
   name                 = "${each.key}-snet-${var.application_name}-${var.environment}"
-  virtual_network_name = module.vnet.name
-  resource_group_name  = module.rg.name
-  address_prefixes     = each.value
+  virtual_network_name = module.vnet.vnet_name
+  resource_group_name  = module.rg.resource_group_name
+  address_prefixes     = [each.value]
 }
 
 
