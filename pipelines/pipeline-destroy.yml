@@ -1,9 +1,9 @@
 # =============================================================
-# Terraform Destroy Pipeline
+# Terraform Destroy Pipeline (Safe + Parameterized)
 # =============================================================
 
-trigger: none    # 🚫 never auto-run
-pr: none         # 🚫 no PR validation
+trigger: none # 🚫 never auto-run
+pr: none # 🚫 no PR validation
 
 pool:
   name: "Self-hosted-pool"
@@ -17,28 +17,29 @@ parameters:
       - dev
       - prod
 
+  - name: confirm_destroy
+    displayName: "Type YES to confirm destroy"
+    type: string
+    default: "NO"
+
 variables:
   - group: terraform-secrets-dev
 
-  # backend config
+  # backend config (shared)
   - name: TF_BACKEND_RESOURCE_GROUP
     value: "rg-digwi-terraform-remote"
   - name: TF_BACKEND_STORAGE_ACCOUNT
     value: "stgdigwiterraformstate"
   - name: TF_BACKEND_CONTAINER_NAME
     value: "tfstate"
-  - name: TF_BACKEND_KEY
-    value: "$(environment).terraform.tfstate"
-  - name: TF_VAR_FILE
-    value: "env/$(environment)/$(environment).tfvars"
 
 stages:
   - stage: Destroy
-    displayName: "Terraform Destroy ($(environment))"
+    displayName: "Terraform Destroy (${{ parameters.environment }})"
     jobs:
       - deployment: TerraformDestroy
         displayName: "Terraform Destroy Job"
-        environment: "$(environment)"   # ✅ optional manual approval gate
+        environment: "${{ parameters.environment }}" # ✅ optional manual approval gate
         pool:
           name: "Self-hosted-pool"
 
@@ -49,22 +50,26 @@ stages:
                 - checkout: self
 
                 - pwsh: |
-                    Write-Host "Terraform Version:"
-                    terraform -version
-                    Write-Host "Azure CLI Version:"
-                    az --version
-                  displayName: "Check Versions"
+                    if ("${{ parameters.confirm_destroy }}" -ne "YES") {
+                      Write-Error "❌ Destroy aborted — confirmation required. Please type YES to confirm."
+                      exit 1
+                    }
 
-                - pwsh: |
-                    Write-Host "Terraform Init for $(environment)"
+                    Write-Host "✅ Proceeding to destroy ${{ parameters.environment }} environment..."
+
+                    $env:TF_ENVIRONMENT = "${{ parameters.environment }}"
+                    $env:TF_BACKEND_KEY = "$env:TF_ENVIRONMENT.terraform.tfstate"
+                    $env:TF_VAR_FILE = "env/$env:TF_ENVIRONMENT/$env:TF_ENVIRONMENT.tfvars"
+
+                    Write-Host "Terraform Init for $env:TF_ENVIRONMENT"
                     terraform init `
                       -backend-config="resource_group_name=$(TF_BACKEND_RESOURCE_GROUP)" `
                       -backend-config="storage_account_name=$(TF_BACKEND_STORAGE_ACCOUNT)" `
                       -backend-config="container_name=$(TF_BACKEND_CONTAINER_NAME)" `
-                      -backend-config="key=$(TF_BACKEND_KEY)"
+                      -backend-config="key=$env:TF_BACKEND_KEY"
 
                     Write-Host "Planning destroy..."
-                    terraform plan -destroy -var-file="$(TF_VAR_FILE)" -out=tfplan
+                    terraform plan -destroy -var-file="$env:TF_VAR_FILE" -out=tfplan
 
                     Write-Host "Applying destroy plan..."
                     terraform apply -auto-approve tfplan
