@@ -1,4 +1,4 @@
-trigger: 
+trigger:
   branches:
     include:
       - main
@@ -9,29 +9,29 @@ pr:
     include:
       - develop
 
-pool: 
-  name: 'Self-hosted-pool'
+pool:
+  name: "Self-hosted-pool"
 
 variables:
-  - group: terraform-secrets     # your secure SP credentials
+  - group: terraform-secrets # your secure SP credentials
 
   # backend configuration
   - name: TF_BACKEND_RESOURCE_GROUP
-    value: 'rg-digwi-terraform-remote'
+    value: "rg-digwi-terraform-remote"
 
   - name: TF_BACKEND_STORAGE_ACCOUNT
-    value: 'stgdigwiterraformstate'
+    value: "stgdigwiterraformstate"
 
   - name: TF_BACKEND_CONTAINER_NAME
-    value: 'tfstate'
+    value: "tfstate"
 
   # Dynamically set environment based on branch (compile-time safe syntax)
   - name: TF_ENVIRONMENT
-    value: ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }} 'prod' ${{ else }} 'dev'
+    value: "dev"
 
   # Azure service connection name (used in init)
   - name: AZURE_SERVICE_CONNECTION
-    value: 'terraform-connection'
+    value: "terraform-connection"
 
   # Service principal authentication (from variable group)
   - name: ARM_CLIENT_ID
@@ -48,7 +48,7 @@ variables:
 
   # Working directory
   - name: TF_WORKING_DIR
-    value: '.'
+    value: "."
 
 stages:
   - stage: InitAndPlan
@@ -59,13 +59,24 @@ stages:
         displayName: "Terraform Init and Plan Job"
 
         steps:
-          - checkout: self 
+          - checkout: self
+
+          # 🧩 Dynamically set environment based on branch
+          - script: |
+              echo "## Detecting Environment..."
+              if [ "$(Build.SourceBranchName)" = "main" ]; then
+                echo "##vso[task.setvariable variable=TF_ENVIRONMENT]prod"
+              else
+                echo "##vso[task.setvariable variable=TF_ENVIRONMENT]dev"
+              fi
+              echo "TF_ENVIRONMENT=$(TF_ENVIRONMENT)"
+            displayName: "Set Environment Dynamically"
 
           - script: |
               echo "Environment: $(TF_ENVIRONMENT)"
               echo "Backend Key: $(TF_BACKEND_KEY)"
             displayName: "Show Environment Context"
- 
+
           - script: |
               terraform -version
               az --version
@@ -87,7 +98,6 @@ stages:
               -var-file="env/$(TF_ENVIRONMENT)/$(TF_ENVIRONMENT).tfvars" \
               -out=tfplan
             displayName: "Terraform Init, Validate & Plan"
-
             env:
               ARM_CLIENT_ID: $(ARM_CLIENT_ID)
               ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
@@ -98,17 +108,16 @@ stages:
             artifact: terraform-plan
             displayName: "Upload Terraform Plan Artifact"
 
-          
   - stage: Apply
     displayName: "Terraform Apply"
     dependsOn: InitAndPlan
-    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')   # only run apply on main
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main') # only run apply on main
     jobs:
       - deployment: TerraformApply
         displayName: "Terraform Apply Stage"
-        environment: 'production'   # requires manual approval before running
+        environment: "production" # requires manual approval before running
         pool:
-          name: 'Self-hosted-pool'
+          name: "Self-hosted-pool"
         strategy:
           runOnce:
             deploy:
