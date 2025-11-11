@@ -47,7 +47,7 @@ stages:
           - checkout: self
 
           # 🧩 Dynamically set environment and backend key
-          - powershell: |
+          - pwsh: |
               Write-Host "## Detecting Environment..."
               if ("$(Build.SourceBranchName)" -eq "main") {
                 Write-Host "##vso[task.setvariable variable=TF_ENVIRONMENT]prod"
@@ -61,12 +61,12 @@ stages:
               Write-Host "Backend Key = $(TF_BACKEND_KEY)"
             displayName: "Set Environment and Backend Key"
 
-          - powershell: |
+          - pwsh: |
               terraform -version
               az --version
             displayName: "Check Terraform and Azure CLI Versions"
 
-          - powershell: |
+          - pwsh: |
               Write-Host "🧩 Terraform Init"
               terraform init `
                 -backend-config="resource_group_name=$(TF_BACKEND_RESOURCE_GROUP)" `
@@ -111,13 +111,13 @@ stages:
               steps:
                 - checkout: self
 
-                - powershell: |
+                - pwsh: |
                     Write-Host "##vso[task.setvariable variable=TF_ENVIRONMENT]prod"
                     Write-Host "##vso[task.setvariable variable=TF_BACKEND_KEY]prod.terraform.tfstate"
                     Write-Host "Environment = $(TF_ENVIRONMENT)"
                   displayName: "Set Environment for Apply"
 
-                - powershell: |
+                - pwsh: |
                     Write-Host "🚀 Terraform Init for Apply"
                     terraform init `
                       -backend-config="resource_group_name=$(TF_BACKEND_RESOURCE_GROUP)" `
