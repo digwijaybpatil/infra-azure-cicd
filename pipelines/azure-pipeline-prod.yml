@@ -3,7 +3,6 @@
 # =============================
 
 trigger: none
-  
 
 pool:
   name: "Self-hosted-pool"
@@ -56,11 +55,11 @@ stages:
     displayName: "Terraform Apply (Prod)"
     dependsOn: PlanProd
     condition: succeeded()
-    
+
     jobs:
       - deployment: ApplyProd
         displayName: "Apply Terraform Changes (Prod)"
-        environment: "Production"   # Add manual approval in DevOps UI
+        environment: "Production" # Add manual approval in DevOps UI
         strategy:
           runOnce:
             deploy:
@@ -72,9 +71,14 @@ stages:
                 - pwsh: |
                     Write-Host "Applying Terraform for Prod"
 
-                    # Change to artifact folder
-                    cd "$(Pipeline.Workspace)/terraform-plan"
-                    dir  # just to confirm tfplan is here
+                    $PlanPath = "$(Pipeline.Workspace)/terraform-plan/tfplan"
+                    $RepoRoot = "$(System.DefaultWorkingDirectory)"
+
+                    Write-Host "Plan path: $PlanPath"
+                    Write-Host "Repo root: $RepoRoot"
+
+                    cd $RepoRoot
+                    dir  # just to confirm we have main.tf etc.
 
                     terraform init `
                       -backend-config="resource_group_name=rg-digwi-terraform-remote" `
@@ -82,7 +86,7 @@ stages:
                       -backend-config="container_name=tfstate" `
                       -backend-config="key=$(TF_BACKEND_KEY)"
 
-                    terraform apply -auto-approve tfplan
+                    terraform apply -auto-approve "$PlanPath"
                   displayName: "Terraform Apply (Prod)"
                   env:
                     ARM_CLIENT_ID: $(ARM_CLIENT_ID)
