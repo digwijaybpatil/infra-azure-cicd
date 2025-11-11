@@ -1,3 +1,4 @@
 output "role_assignment_id" {
-  value = azurerm_role_assignment.this.id
+  value       = azurerm_role_assignment.role_assignment.id
+  description = "The ID of the role assignment"
 }
