@@ -15,9 +15,9 @@ module "vnet" {
 locals {
   subnets = {
     AzureBastionSubnet = cidrsubnet(var.vnet_address_space, 4, 0)
-    app     = cidrsubnet(var.vnet_address_space, 2, 1)
-    data    = cidrsubnet(var.vnet_address_space, 2, 2)
-    web     = cidrsubnet(var.vnet_address_space, 2, 3)
+    app                = cidrsubnet(var.vnet_address_space, 2, 1)
+    data               = cidrsubnet(var.vnet_address_space, 2, 2)
+    web                = cidrsubnet(var.vnet_address_space, 2, 3)
   }
 }
 
@@ -61,7 +61,7 @@ module "bastion_host" {
   location              = module.rg.resource_group_location
   resource_group_name   = module.rg.resource_group_name
   ip_configuration_name = "bastion-ipconfig"
-  subnet_id             = module.snet["bastion"].snet_id
+  subnet_id             = module.snet["AzureBastionSubnet"].snet_id
   public_ip_address_id  = module.pip_bastion.pip_id
 }
 
