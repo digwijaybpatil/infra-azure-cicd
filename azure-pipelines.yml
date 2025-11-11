@@ -13,44 +13,29 @@ pool:
   name: "Self-hosted-pool"
 
 variables:
-  - group: terraform-secrets # your secure SP credentials
+  - group: terraform-secrets # contains ARM_CLIENT_ID, etc.
 
   # backend configuration
   - name: TF_BACKEND_RESOURCE_GROUP
     value: "rg-digwi-terraform-remote"
-
   - name: TF_BACKEND_STORAGE_ACCOUNT
     value: "stgdigwiterraformstate"
-
   - name: TF_BACKEND_CONTAINER_NAME
     value: "tfstate"
 
-  # Dynamically set environment based on branch (compile-time safe syntax)
+  # Default values (will be overridden dynamically)
   - name: TF_ENVIRONMENT
     value: "dev"
+  - name: TF_BACKEND_KEY
+    value: "dev.terraform.tfstate"
 
-  # Azure service connection name (used in init)
-  - name: AZURE_SERVICE_CONNECTION
-    value: "terraform-connection"
-
-  # # Service principal authentication (from variable group)
-  # - name: ARM_CLIENT_ID
-  #   value: $(ARM_CLIENT_ID)
-
-  # - name: ARM_CLIENT_SECRET
-  #   value: $(ARM_CLIENT_SECRET)
-
-  # - name: ARM_TENANT_ID
-  #   value: $(ARM_TENANT_ID)
-
-  # - name: ARM_SUBSCRIPTION_ID
-  #   value: $(ARM_SUBSCRIPTION_ID)
-
-  # Working directory
   - name: TF_WORKING_DIR
     value: "."
 
 stages:
+  # ======================================================
+  # 1️⃣ Terraform Init and Plan
+  # ======================================================
   - stage: InitAndPlan
     displayName: "Terraform Init and Plan"
 
@@ -61,42 +46,41 @@ stages:
         steps:
           - checkout: self
 
-          # 🧩 Dynamically set environment based on branch
-          - script: |
-              echo "## Detecting Environment..."
-              if [ "$(Build.SourceBranchName)" = "main" ]; then
-                echo "##vso[task.setvariable variable=TF_ENVIRONMENT]prod"
-              else
-                echo "##vso[task.setvariable variable=TF_ENVIRONMENT]dev"
-              fi
-              echo "TF_ENVIRONMENT=$(TF_ENVIRONMENT)"
-            displayName: "Set Environment Dynamically"
+          # 🧩 Dynamically set environment and backend key
+          - powershell: |
+              Write-Host "## Detecting Environment..."
+              if ("$(Build.SourceBranchName)" -eq "main") {
+                Write-Host "##vso[task.setvariable variable=TF_ENVIRONMENT]prod"
+                Write-Host "##vso[task.setvariable variable=TF_BACKEND_KEY]prod.terraform.tfstate"
+              }
+              else {
+                Write-Host "##vso[task.setvariable variable=TF_ENVIRONMENT]dev"
+                Write-Host "##vso[task.setvariable variable=TF_BACKEND_KEY]dev.terraform.tfstate"
+              }
+              Write-Host "Environment = $(TF_ENVIRONMENT)"
+              Write-Host "Backend Key = $(TF_BACKEND_KEY)"
+            displayName: "Set Environment and Backend Key"
 
-          - script: |
-              echo "Environment: $(TF_ENVIRONMENT)"
-              echo "Backend Key: $(TF_BACKEND_KEY)"
-            displayName: "Show Environment Context"
-
-          - script: |
+          - powershell: |
               terraform -version
               az --version
             displayName: "Check Terraform and Azure CLI Versions"
 
-          - script: |
-              echo "Terraform Init"
-              terraform init \
-              -backend-config="resource_group_name=$(TF_BACKEND_RESOURCE_GROUP)" \
-              -backend-config="storage_account_name=$(TF_BACKEND_STORAGE_ACCOUNT)" \
-              -backend-config="container_name=$(TF_BACKEND_CONTAINER_NAME)" \
-              -backend-config="key=$(TF_BACKEND_KEY)"
+          - powershell: |
+              Write-Host "🧩 Terraform Init"
+              terraform init `
+                -backend-config="resource_group_name=$(TF_BACKEND_RESOURCE_GROUP)" `
+                -backend-config="storage_account_name=$(TF_BACKEND_STORAGE_ACCOUNT)" `
+                -backend-config="container_name=$(TF_BACKEND_CONTAINER_NAME)" `
+                -backend-config="key=$(TF_BACKEND_KEY)"
 
-              echo "Terraform Validate"
+              Write-Host "🧩 Terraform Validate"
               terraform validate
 
-              echo "Terraform Plan"
-              terraform plan -input=false \
-              -var-file="env/$(TF_ENVIRONMENT)/$(TF_ENVIRONMENT).tfvars" \
-              -out=tfplan
+              Write-Host "🧩 Terraform Plan"
+              terraform plan -input=false `
+                -var-file="env/$(TF_ENVIRONMENT)/$(TF_ENVIRONMENT).tfvars" `
+                -out=tfplan
             displayName: "Terraform Init, Validate & Plan"
             env:
               ARM_CLIENT_ID: $(ARM_CLIENT_ID)
@@ -106,16 +90,19 @@ stages:
 
           - publish: $(System.DefaultWorkingDirectory)/tfplan
             artifact: terraform-plan
-            displayName: "Upload Terraform Plan Artifact"
+            displayName: "📦 Upload Terraform Plan Artifact"
 
+  # ======================================================
+  # 2️⃣ Terraform Apply (Main Branch Only)
+  # ======================================================
   - stage: Apply
     displayName: "Terraform Apply"
     dependsOn: InitAndPlan
-    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main') # only run apply on main
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
     jobs:
       - deployment: TerraformApply
         displayName: "Terraform Apply Stage"
-        environment: "production" # requires manual approval before running
+        environment: "production" # manual approval before apply
         pool:
           name: "Self-hosted-pool"
         strategy:
@@ -124,16 +111,22 @@ stages:
               steps:
                 - checkout: self
 
-                - script: |
-                    echo "Applying Terraform for $(TF_ENVIRONMENT)"
-                    terraform init \
-                      -backend-config="resource_group_name=$(TF_BACKEND_RESOURCE_GROUP)" \
-                      -backend-config="storage_account_name=$(TF_BACKEND_STORAGE_ACCOUNT)" \
-                      -backend-config="container_name=$(TF_BACKEND_CONTAINER_NAME)" \
+                - powershell: |
+                    Write-Host "##vso[task.setvariable variable=TF_ENVIRONMENT]prod"
+                    Write-Host "##vso[task.setvariable variable=TF_BACKEND_KEY]prod.terraform.tfstate"
+                    Write-Host "Environment = $(TF_ENVIRONMENT)"
+                  displayName: "Set Environment for Apply"
+
+                - powershell: |
+                    Write-Host "🚀 Terraform Init for Apply"
+                    terraform init `
+                      -backend-config="resource_group_name=$(TF_BACKEND_RESOURCE_GROUP)" `
+                      -backend-config="storage_account_name=$(TF_BACKEND_STORAGE_ACCOUNT)" `
+                      -backend-config="container_name=$(TF_BACKEND_CONTAINER_NAME)" `
                       -backend-config="key=$(TF_BACKEND_KEY)"
 
-                    echo "Terraform Apply"
-                    terraform apply -auto-approve \
+                    Write-Host "🧩 Terraform Apply"
+                    terraform apply -auto-approve `
                       -var-file="env/$(TF_ENVIRONMENT)/$(TF_ENVIRONMENT).tfvars"
                   displayName: "Terraform Apply"
                   env:
