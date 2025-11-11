@@ -1,0 +1,49 @@
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  name: "Self-hosted-pool"
+
+variables:
+  - group: terraform-secrets-dev
+  - name: TF_ENVIRONMENT
+    value: "dev"
+  - name: TF_VAR_FILE
+    value: "env/dev/dev.tfvars"
+  - name: TF_BACKEND_KEY
+    value: "dev-pr-validation.tfstate"
+
+stages:
+  - stage: PRValidation
+    displayName: "PR Validation (Dev)"
+    jobs:
+      - job: Validate
+        displayName: "Terraform PR Validation Job"
+
+        steps:
+          - checkout: self
+
+          - pwsh: |
+              terraform --version
+              az --version
+            displayName: "Check Terraform and Azure CLI Versions"
+
+          - pwsh: |
+              Write-Host "Terraform Init (PR Validation)"
+              terraform init `
+                -backend-config="resource_group_name=rg-digwi-terraform-remote" `
+                -backend-config="storage_account_name=stgdigwiterraformstate" `
+                -backend-config="container_name=tfstate" `
+                -backend-config="key=$(TF_BACKEND_KEY)"
+
+              terraform fmt -check -recursive
+              terraform validate
+              terraform plan -input=false -var-file="$(TF_VAR_FILE)" -out=tfplan
+            displayName: "Terraform Init, Validate & Plan"
+            env:
+              ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+              ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+              ARM_TENANT_ID: $(ARM_TENANT_ID)
+              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
