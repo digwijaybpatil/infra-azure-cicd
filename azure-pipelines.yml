@@ -33,18 +33,18 @@ variables:
   - name: AZURE_SERVICE_CONNECTION
     value: "terraform-connection"
 
-  # Service principal authentication (from variable group)
-  - name: ARM_CLIENT_ID
-    value: $(ARM_CLIENT_ID)
+  # # Service principal authentication (from variable group)
+  # - name: ARM_CLIENT_ID
+  #   value: $(ARM_CLIENT_ID)
 
-  - name: ARM_CLIENT_SECRET
-    value: $(ARM_CLIENT_SECRET)
+  # - name: ARM_CLIENT_SECRET
+  #   value: $(ARM_CLIENT_SECRET)
 
-  - name: ARM_TENANT_ID
-    value: $(ARM_TENANT_ID)
+  # - name: ARM_TENANT_ID
+  #   value: $(ARM_TENANT_ID)
 
-  - name: ARM_SUBSCRIPTION_ID
-    value: $(ARM_SUBSCRIPTION_ID)
+  # - name: ARM_SUBSCRIPTION_ID
+  #   value: $(ARM_SUBSCRIPTION_ID)
 
   # Working directory
   - name: TF_WORKING_DIR
