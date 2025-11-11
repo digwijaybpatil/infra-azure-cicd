@@ -65,4 +65,27 @@ module "bastion_host" {
   public_ip_address_id  = module.pip_bastion.pip_id
 }
 
+data "azurerm_client_config" "current" {
+
+}
+
+module "kv" {
+  source                     = "./modules/azurerm_key_vault"
+  name                       = "kv-${var.application_name}-${var.environment}"
+  location                   = module.rg.resource_group_location
+  resource_group_name        = module.rg.resource_group_name
+  tenant_id                  = data.azurerm_client_config.current.tenant_id
+  sku_name                   = "standard"
+  purge_protection_enabled   = false
+  soft_delete_retention_days = 7
+  enable_rbac_authorization  = true
+}
+
+module "role_kv_admin" {
+  source               = "./modules/azurerm_role_assignment"
+  scope                = module.kv.key_vault_id
+  role_definition_name = "Key Vault Administrator"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
 
