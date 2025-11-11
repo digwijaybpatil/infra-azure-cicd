@@ -56,10 +56,11 @@ stages:
     displayName: "Terraform Apply (Prod)"
     dependsOn: PlanProd
     condition: succeeded()
-    environment: "Production"   # Add manual approval in DevOps UI
+    
     jobs:
       - deployment: ApplyProd
         displayName: "Apply Terraform Changes (Prod)"
+        environment: "Production"   # Add manual approval in DevOps UI
         strategy:
           runOnce:
             deploy:
