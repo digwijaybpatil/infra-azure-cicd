@@ -2,6 +2,7 @@ environment = "dev"
 
 vnet_address_space = "10.40.0.0/22"
 
+vm_admin_username = "azureuser"
 vm_size = "Standard_B1s"
 os_disk = {
   caching              = "ReadWrite"
