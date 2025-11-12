@@ -45,7 +45,7 @@ variable "os_disk" {
   type = object({
     caching              = string
     storage_account_type = string
-    disk_size_gb         = number
+    disk_size_gb         = optional(number)
   })
 }
 
