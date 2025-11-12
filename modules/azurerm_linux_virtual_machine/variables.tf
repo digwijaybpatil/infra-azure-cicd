@@ -34,6 +34,11 @@ variable "ssh_public_key" {
   description = "This is the public key which will be stored at vm"
 }
 
+variable "disable_password_authentication" {
+  type = bool
+  default = true
+}
+
 variable "source_image_reference" {
   description = "Map defining the source image for the Linux VM."
   type = object({

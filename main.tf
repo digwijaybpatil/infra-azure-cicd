@@ -96,25 +96,25 @@ resource "tls_private_key" "vm1_key" {
 resource "azurerm_key_vault_secret" "vm1_ssh_private_key" {
   name         = "vm1-ssh-private-key"
   value        = tls_private_key.vm1_key.private_key_pem
-  key_vault_id = module.kv.key_vault_id  
+  key_vault_id = module.kv.key_vault_id
 }
 
 resource "azurerm_key_vault_secret" "vm1_ssh_public_key" {
   name         = "vm1-ssh-public-key"
   value        = tls_private_key.vm1_key.public_key_openssh
-  key_vault_id = module.kv.key_vault_id  
+  key_vault_id = module.kv.key_vault_id
 }
 
 
 module "vm1" {
-  source              = "./modules/azurerm_linux_virtual_machine"
-  vm_name             = "vm1-${var.application_name}-${var.environment}"
-  resource_group_name = module.rg.resource_group_name
-  location            = module.rg.resource_group_location 
-  vm_size             = var.vm_size
-  admin_username      = var.vm_admin_username
-  network_interface_id = module.nic-vm1.nic_id
-  ssh_public_key      = tls_private_key.vm1_key.public_key_openssh
+  source                 = "./modules/azurerm_linux_virtual_machine"
+  vm_name                = "vm1-${var.application_name}-${var.environment}"
+  resource_group_name    = module.rg.resource_group_name
+  location               = module.rg.resource_group_location
+  vm_size                = var.vm_size
+  admin_username         = var.vm_admin_username
+  network_interface_id   = module.nic-vm1.nic_id
+  ssh_public_key         = tls_private_key.vm1_key.public_key_openssh
   source_image_reference = var.source_image_reference
-  os_disk = var.os_disk
+  os_disk                = var.os_disk
 }
