@@ -34,16 +34,6 @@ variable "ssh_public_key" {
   description = "This is the public key which will be stored at vm"
 }
 
-variable "caching" {
-  type = string
-  default = "ReadWrite"
-}
-
-variable "storage_account_type" {
-  type = string
-  default = "Standard_LRS"
-}
-
 variable "source_image_reference" {
   description = "Map defining the source image for the Linux VM."
   type = object({
@@ -52,4 +42,18 @@ variable "source_image_reference" {
     sku       = string
     version   = string
   })
+}
+
+variable "os_disk" {
+  description = "OS Disk configuration"
+  type = object({
+    caching              = string
+    storage_account_type = string
+    disk_size_gb         = optional(number)
+  })
+  default = {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+    disk_size_gb         = null
+  }
 }

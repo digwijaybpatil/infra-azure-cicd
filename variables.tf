@@ -20,6 +20,35 @@ variable "vnet_address_space" {
 
 }
 
+variable "vm_size" {
+  type        = string
+  description = "name of the vm"
+}
+
+variable "vm_admin_username" {
+  type        = string
+  description = "admin user name for vm"
+}
+
+variable "source_image_reference" {
+  description = "Source image reference"
+  type = object({
+    publisher = string
+    offer     = string
+    sku       = string
+    version   = string
+  })
+}
+
+variable "os_disk" {
+  description = "OS disk configuration"
+  type = object({
+    caching              = string
+    storage_account_type = string
+    disk_size_gb         = number
+  })
+}
+
 
 
 

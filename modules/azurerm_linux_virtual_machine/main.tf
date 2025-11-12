@@ -4,9 +4,7 @@ resource "azurerm_linux_virtual_machine" "linux_vm" {
   location            = var.location
   size                = var.vm_size
   admin_username      = var.admin_username
-  network_interface_ids = [
-    var.network_interface_id,
-  ]
+  network_interface_ids = [var.network_interface_id]
 
   admin_ssh_key {
     username   = var.admin_username
@@ -14,8 +12,10 @@ resource "azurerm_linux_virtual_machine" "linux_vm" {
   }
 
   os_disk {
-    caching              = var.caching
-    storage_account_type = var.storage_account_type
+    name                = "${var.vm_name}-osdisk"
+    caching              = var.os_disk.caching
+    storage_account_type = var.os_disk.storage_account_type
+    disk_size_gb = var.os_disk.disk_size_gb
   }
 
   source_image_reference {
