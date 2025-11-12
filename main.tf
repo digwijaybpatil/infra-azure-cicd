@@ -88,4 +88,21 @@ module "kv" {
 #   principal_id         = data.azurerm_client_config.current.object_id
 # }
 
+resource "tls_private_key" "vm1_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "azurerm_key_vault_secret" "vm1_ssh_private_key" {
+  name         = "vm1-ssh-private-key"
+  value        = tls_private_key.vm1_key.private_key_pem
+  key_vault_id = module.kv.key_vault_id  
+}
+
+resource "azurerm_key_vault_secret" "vm1_ssh_public_key" {
+  name         = "vm1-ssh-public-key"
+  value        = tls_private_key.vm1_key.public_key_openssh
+  key_vault_id = module.kv.key_vault_id  
+}
+
 
