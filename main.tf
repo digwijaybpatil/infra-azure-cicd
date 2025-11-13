@@ -65,7 +65,7 @@ module "nic_vm" {
 
 module "nic_nsg_association" {
   source                    = "./modules/azurerm_network_interface_network_security_group_association"
-  network_interface_id      = module.nic-vm1.nic_id
+  network_interface_id      = module.nic-vm.nic_id
   network_security_group_id = module.nsg_vm.nsg_id
 
 }
@@ -110,13 +110,13 @@ resource "tls_private_key" "vm_key" {
 
 resource "azurerm_key_vault_secret" "vm_ssh_private_key" {
   name         = "vm-ssh-private-key"
-  value        = tls_private_key.vm1_key.private_key_pem
+  value        = tls_private_key.vm_key.private_key_pem
   key_vault_id = module.kv.key_vault_id
 }
 
 resource "azurerm_key_vault_secret" "vm_ssh_public_key" {
   name         = "vm-ssh-public-key"
-  value        = tls_private_key.vm1_key.public_key_openssh
+  value        = tls_private_key.vm_key.public_key_openssh
   key_vault_id = module.kv.key_vault_id
 }
 
@@ -128,8 +128,8 @@ module "vm" {
   location               = module.rg.resource_group_location
   vm_size                = var.vm_size
   admin_username         = var.vm_admin_username
-  network_interface_id   = module.nic-vm1.nic_id
-  ssh_public_key         = tls_private_key.vm1_key.public_key_openssh
+  network_interface_id   = module.nic-vm.nic_id
+  ssh_public_key         = tls_private_key.vm_key.public_key_openssh
   source_image_reference = var.source_image_reference
   os_disk                = var.os_disk
 }
