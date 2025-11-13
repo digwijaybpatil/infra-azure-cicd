@@ -65,7 +65,7 @@ module "nic_vm" {
 
 module "nic_nsg_association" {
   source                    = "./modules/azurerm_network_interface_network_security_group_association"
-  network_interface_id      = module.nic-vm.nic_id
+  network_interface_id      = module.nic_vm.nic_id
   network_security_group_id = module.nsg_vm.nsg_id
 
 }
@@ -128,7 +128,7 @@ module "vm" {
   location               = module.rg.resource_group_location
   vm_size                = var.vm_size
   admin_username         = var.vm_admin_username
-  network_interface_id   = module.nic-vm.nic_id
+  network_interface_id   = module.nic_vm.nic_id
   ssh_public_key         = tls_private_key.vm_key.public_key_openssh
   source_image_reference = var.source_image_reference
   os_disk                = var.os_disk
