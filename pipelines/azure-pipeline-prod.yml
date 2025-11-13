@@ -1,0 +1,95 @@
+# =============================
+# Prod Deployment Pipeline
+# =============================
+
+trigger: none
+
+pool:
+  name: "Self-hosted-pool"
+
+variables:
+  - group: terraform-secrets-prod
+  - name: TF_ENVIRONMENT
+    value: "prod"
+  - name: TF_VAR_FILE
+    value: "env/prod/prod.tfvars"
+  - name: TF_BACKEND_KEY
+    value: "prod.terraform.tfstate"
+
+stages:
+  - stage: PlanProd
+    displayName: "Terraform Plan (Prod)"
+    jobs:
+      - job: Plan
+        displayName: "Terraform Init & Plan (Prod)"
+        steps:
+          - checkout: self
+
+          - pwsh: |
+              terraform -version
+              az --version
+            displayName: "Check Tools"
+
+          - pwsh: |
+              Write-Host "Terraform Init for Prod"
+              terraform init `
+                -backend-config="resource_group_name=rg-digwi-terraform-remote" `
+                -backend-config="storage_account_name=stgdigwiterraformstate" `
+                -backend-config="container_name=tfstate" `
+                -backend-config="key=$(TF_BACKEND_KEY)"
+
+              terraform validate
+              terraform plan -input=false -var-file="$(TF_VAR_FILE)" -out=tfplan
+            displayName: "Terraform Init, Validate & Plan (Prod)"
+            env:
+              ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+              ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+              ARM_TENANT_ID: $(ARM_TENANT_ID)
+              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+
+          - publish: $(System.DefaultWorkingDirectory)/tfplan
+            artifact: terraform-plan
+            displayName: "Publish Plan Artifact"
+
+  - stage: ApplyProd
+    displayName: "Terraform Apply (Prod)"
+    dependsOn: PlanProd
+    condition: succeeded()
+
+    jobs:
+      - deployment: ApplyProd
+        displayName: "Apply Terraform Changes (Prod)"
+        environment: "Production" # Add manual approval in DevOps UI
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - download: current
+                  artifact: terraform-plan
+
+                - pwsh: |
+                    Write-Host "Applying Terraform for Prod"
+
+                    $PlanPath = "$(Pipeline.Workspace)/terraform-plan/tfplan"
+                    $RepoRoot = "$(System.DefaultWorkingDirectory)"
+
+                    Write-Host "Plan path: $PlanPath"
+                    Write-Host "Repo root: $RepoRoot"
+
+                    cd $RepoRoot
+                    dir  # just to confirm we have main.tf etc.
+
+                    terraform init `
+                      -backend-config="resource_group_name=rg-digwi-terraform-remote" `
+                      -backend-config="storage_account_name=stgdigwiterraformstate" `
+                      -backend-config="container_name=tfstate" `
+                      -backend-config="key=$(TF_BACKEND_KEY)"
+
+                    terraform apply -auto-approve "$PlanPath"
+                  displayName: "Terraform Apply (Prod)"
+                  env:
+                    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+                    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+                    ARM_TENANT_ID: $(ARM_TENANT_ID)
+                    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
