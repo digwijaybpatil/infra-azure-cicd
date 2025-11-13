@@ -54,8 +54,8 @@ module "nsg_vm" {
   security_rules      = var.security_rules
 }
 
-module "nic-vm" {
-  source               = "./modules/azurerm_nic"
+module "nic_vm" {
+  source               = "./modules/azurerm_network_interface"
   name                 = "nic-vm-${var.application_name}-${var.environment}"
   location             = module.rg.resource_group_location
   resource_group_name  = module.rg.resource_group_name
