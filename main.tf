@@ -37,22 +37,37 @@ module "pip_bastion" {
   resource_group_name = module.rg.resource_group_name
 }
 
-# module "pip-vm" {
-#   source              = "./modules/azurerm_public_ip"
-#   name                = "pip-vm-${var.application_name}-${var.environment}"
-#   location            = module.rg.resource_group_location
-#   resource_group_name = module.rg.resource_group_name
-#   allocation_method   = "Static"
-#   sku                 = "Standard"
-# }
-
-
-module "nic-vm1" {
-  source              = "./modules/azurerm_nic"
-  name                = "nic-vm1-${var.application_name}-${var.environment}"
+module "pip_vm" {
+  source              = "./modules/azurerm_public_ip"
+  name                = "pip-vm-${var.application_name}-${var.environment}"
   location            = module.rg.resource_group_location
   resource_group_name = module.rg.resource_group_name
-  subnet_id           = module.snet["app"].snet_id
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
+
+module "nsg_vm" {
+  source              = "./modules/azurerm_network_security_group"
+  nsg_name            = "nsg-vm-${var.application_name}-${var.environment}"
+  location            = module.rg.resource_group_location
+  resource_group_name = module.rg.resource_group_name
+  security_rules      = var.security_rules
+}
+
+module "nic-vm" {
+  source               = "./modules/azurerm_nic"
+  name                 = "nic-vm-${var.application_name}-${var.environment}"
+  location             = module.rg.resource_group_location
+  resource_group_name  = module.rg.resource_group_name
+  subnet_id            = module.snet["app"].snet_id
+  public_ip_address_id = module.pip_vm.pip_id
+}
+
+module "nic_nsg_association" {
+  source                    = "./modules/azurerm_network_interface_network_security_group_association"
+  network_interface_id      = module.nic-vm1.nic_id
+  network_security_group_id = module.nsg_vm.nsg_id
+
 }
 
 module "bastion_host" {
@@ -88,25 +103,25 @@ module "kv" {
 #   principal_id         = data.azurerm_client_config.current.object_id
 # }
 
-resource "tls_private_key" "vm1_key" {
+resource "tls_private_key" "vm_key" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
-resource "azurerm_key_vault_secret" "vm1_ssh_private_key" {
-  name         = "vm1-ssh-private-key"
+resource "azurerm_key_vault_secret" "vm_ssh_private_key" {
+  name         = "vm-ssh-private-key"
   value        = tls_private_key.vm1_key.private_key_pem
   key_vault_id = module.kv.key_vault_id
 }
 
-resource "azurerm_key_vault_secret" "vm1_ssh_public_key" {
-  name         = "vm1-ssh-public-key"
+resource "azurerm_key_vault_secret" "vm_ssh_public_key" {
+  name         = "vm-ssh-public-key"
   value        = tls_private_key.vm1_key.public_key_openssh
   key_vault_id = module.kv.key_vault_id
 }
 
 
-module "vm1" {
+module "vm" {
   source                 = "./modules/azurerm_linux_virtual_machine"
   vm_name                = "vm1-${var.application_name}-${var.environment}"
   resource_group_name    = module.rg.resource_group_name
