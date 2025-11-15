@@ -153,12 +153,14 @@ resource "tls_private_key" "vm_key" {
 }
 
 resource "azurerm_key_vault_secret" "vm_ssh_private_key" {
+  depends_on   = [module.role_kv_admin]
   name         = "vm-ssh-private-key"
   value        = tls_private_key.vm_key.private_key_pem
   key_vault_id = module.kv.key_vault_id
 }
 
 resource "azurerm_key_vault_secret" "vm_ssh_public_key" {
+  depends_on   = [module.role_kv_admin]
   name         = "vm-ssh-public-key"
   value        = tls_private_key.vm_key.public_key_openssh
   key_vault_id = module.kv.key_vault_id

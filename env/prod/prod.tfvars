@@ -3,7 +3,7 @@ environment = "prod"
 vnet_address_space = "10.39.0.0/22"
 
 vms = {
-  app_vm = {
+  app-vm = {
     vm_size           = "Standard_B1s"
     vm_admin_username = "azureuser"
     subnet_name       = "app"
@@ -55,7 +55,7 @@ vms = {
     ]
   }
 
-  web_vm = {
+  web-vm = {
     vm_size           = "Standard_B1s"
     vm_admin_username = "azureuser"
     subnet_name       = "web"
