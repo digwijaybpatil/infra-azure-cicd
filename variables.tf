@@ -9,6 +9,11 @@ variable "primary_location" {
   default     = "central india"
 }
 
+variable "secondary_location" {
+  type = string
+  description = "secondary location"
+}
+
 variable "environment" {
   description = "The deployment environment (e.g., dev, prod)"
   type        = string
@@ -20,48 +25,80 @@ variable "vnet_address_space" {
 
 }
 
-variable "vm_size" {
-  type        = string
-  description = "name of the vm"
-}
-
-variable "vm_admin_username" {
-  type        = string
-  description = "admin user name for vm"
-}
-
-variable "source_image_reference" {
-  description = "Source image reference"
-  type = object({
-    publisher = string
-    offer     = string
-    sku       = string
-    version   = string
-  })
-}
-
-variable "os_disk" {
-  description = "OS disk configuration"
-  type = object({
-    caching              = string
-    storage_account_type = string
-    disk_size_gb         = optional(number)
-  })
-}
-
-
-variable "security_rules" {
-  type = list(object({
-    name                       = string
-    priority                   = number
-    direction                  = string
-    access                     = string
-    protocol                   = string
-    source_port_range          = string
-    destination_port_range     = string
-    source_address_prefix      = string
-    destination_address_prefix = string
+variable "vms" {
+  type = map(object({
+    vm_size = string
+    vm_admin_username = string
+    subnet_name = string
+    public_ip_enabled = optional(bool, false)
+    source_image_reference = object({
+      publisher = string
+      offer = string
+      sku = string
+      version = string 
+    })
+    os_disk = object({
+      caching = string
+      storage_account_type = string
+      disk_size_gb = optional(number) 
+    })
+    security_rules = list(object({
+      name                       = string
+      priority                   = number
+      direction                  = string
+      access                     = string
+      protocol                   = string
+      source_port_range          = string
+      destination_port_range     = string
+      source_address_prefix      = string
+      destination_address_prefix = string
+    }))
   }))
-  description = "list of security rules to be created in nsg"
+  
 }
+
+# variable "vm_size" {
+#   type        = string
+#   description = "name of the vm"
+# }
+
+# variable "vm_admin_username" {
+#   type        = string
+#   description = "admin user name for vm"
+# }
+
+# variable "source_image_reference" {
+#   description = "Source image reference"
+#   type = object({
+#     publisher = string
+#     offer     = string
+#     sku       = string
+#     version   = string
+#   })
+# }
+
+# variable "os_disk" {
+#   description = "OS disk configuration"
+#   type = object({
+#     caching              = string
+#     storage_account_type = string
+#     disk_size_gb         = optional(number)
+#   })
+# }
+
+
+# variable "security_rules" {
+#   type = list(object({
+#     name                       = string
+#     priority                   = number
+#     direction                  = string
+#     access                     = string
+#     protocol                   = string
+#     source_port_range          = string
+#     destination_port_range     = string
+#     source_address_prefix      = string
+#     destination_address_prefix = string
+#   }))
+#   description = "list of security rules to be created in nsg"
+# }
 
