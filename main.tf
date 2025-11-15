@@ -30,12 +30,12 @@ module "snet" {
   address_prefixes     = [each.value]
 }
 
-module "pip_bastion" {
-  source              = "./modules/azurerm_public_ip"
-  name                = "pip-bastion-${var.application_name}-${var.environment}"
-  location            = module.rg.resource_group_location
-  resource_group_name = module.rg.resource_group_name
-}
+# module "pip_bastion" {
+#   source              = "./modules/azurerm_public_ip"
+#   name                = "pip-bastion-${var.application_name}-${var.environment}"
+#   location            = module.rg.resource_group_location
+#   resource_group_name = module.rg.resource_group_name
+# }
 
 module "pip_vm" {
   source              = "./modules/azurerm_public_ip"
@@ -70,15 +70,15 @@ module "nic_nsg_association" {
 
 }
 
-module "bastion_host" {
-  source                = "./modules/azurerm_bastion_host"
-  name                  = "bastion-${var.application_name}-${var.environment}"
-  location              = module.rg.resource_group_location
-  resource_group_name   = module.rg.resource_group_name
-  ip_configuration_name = "bastion-ipconfig"
-  subnet_id             = module.snet["AzureBastionSubnet"].snet_id
-  public_ip_address_id  = module.pip_bastion.pip_id
-}
+# module "bastion_host" {
+#   source                = "./modules/azurerm_bastion_host"
+#   name                  = "bastion-${var.application_name}-${var.environment}"
+#   location              = module.rg.resource_group_location
+#   resource_group_name   = module.rg.resource_group_name
+#   ip_configuration_name = "bastion-ipconfig"
+#   subnet_id             = module.snet["AzureBastionSubnet"].snet_id
+#   public_ip_address_id  = module.pip_bastion.pip_id
+# }
 
 data "azurerm_client_config" "current" {
 
