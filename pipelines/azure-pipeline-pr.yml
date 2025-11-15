@@ -15,7 +15,7 @@ variables:
   - name: TF_VAR_FILE
     value: "env/dev/dev.tfvars"
   - name: TF_BACKEND_KEY
-    value: "dev-pr-validation.tfstate"
+    value: "dev.terraform.tfstate"
 
 stages:
   - stage: PRValidation
