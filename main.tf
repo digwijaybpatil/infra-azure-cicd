@@ -96,12 +96,12 @@ module "kv" {
   rbac_authorization_enabled = true
 }
 
-# module "role_kv_admin" {
-#   source               = "./modules/azurerm_role_assignment"
-#   scope                = module.kv.key_vault_id
-#   role_definition_name = "Key Vault Administrator"
-#   principal_id         = data.azurerm_client_config.current.object_id
-# }
+module "role_kv_admin" {
+  source               = "./modules/azurerm_role_assignment"
+  scope                = module.kv.key_vault_id
+  role_definition_name = "Key Vault Administrator"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
 
 resource "tls_private_key" "vm_key" {
   algorithm = "RSA"
