@@ -1,9 +1,5 @@
-# =============================================================
-# Terraform Destroy Pipeline (Safe + Parameterized)
-# =============================================================
-
-trigger: none # 🚫 never auto-run
-pr: none # 🚫 no PR validation
+trigger: none 
+pr: none 
 
 pool:
   name: "Self-hosted-pool"
@@ -25,7 +21,7 @@ parameters:
 variables:
   - group: terraform-secrets-dev
 
-  # backend config (shared)
+ 
   - name: TF_BACKEND_RESOURCE_GROUP
     value: "rg-digwi-terraform-remote"
   - name: TF_BACKEND_STORAGE_ACCOUNT
@@ -39,7 +35,7 @@ stages:
     jobs:
       - deployment: TerraformDestroy
         displayName: "Terraform Destroy Job"
-        environment: "${{ parameters.environment }}" # ✅ optional manual approval gate
+        environment: "${{ parameters.environment }}" 
         pool:
           name: "Self-hosted-pool"
 
@@ -51,11 +47,11 @@ stages:
 
                 - pwsh: |
                     if ("${{ parameters.confirm_destroy }}" -ne "YES") {
-                      Write-Error "❌ Destroy aborted — confirmation required. Please type YES to confirm."
+                      Write-Error "Destroy aborted — confirmation required. Please type YES to confirm."
                       exit 1
                     }
 
-                    Write-Host "✅ Proceeding to destroy ${{ parameters.environment }} environment..."
+                    Write-Host "Proceeding to destroy ${{ parameters.environment }} environment..."
 
                     $env:TF_ENVIRONMENT = "${{ parameters.environment }}"
                     $env:TF_BACKEND_KEY = "$env:TF_ENVIRONMENT.terraform.tfstate"

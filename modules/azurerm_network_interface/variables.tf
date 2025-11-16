@@ -16,13 +16,13 @@ variable "resource_group_name" {
 variable "ip_configuration_name" {
   description = "Name for the NIC's IP configuration"
   type        = string
-  default     = "ipconfig1"  # ✅ sensible default
+  default     = "ipconfig1"  
 }
 
 variable "private_ip_address_allocation" {
   description = "Private IP allocation type (Dynamic or Static)"
   type        = string
-  default     = "Dynamic"   # ✅ best default
+  default     = "Dynamic"  
 }
 
 variable "public_ip_address_id" {

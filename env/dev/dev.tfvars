@@ -27,7 +27,7 @@ vms = {
         protocol                   = "Tcp"
         source_port_range          = "*"
         destination_port_range     = "22"
-        source_address_prefix      = "*" # Replace "*" with your IP or CIDR for better security
+        source_address_prefix      = "*" 
         destination_address_prefix = "*"
       },
       {
@@ -49,7 +49,7 @@ vms = {
         protocol                   = "*"
         source_port_range          = "*"
         destination_port_range     = "*"
-        source_address_prefix      = "VirtualNetwork" // Allows all traffic from within the VNet
+        source_address_prefix      = "VirtualNetwork" 
         destination_address_prefix = "VirtualNetwork"
       }
     ]
@@ -79,7 +79,7 @@ vms = {
         protocol                   = "Tcp"
         source_port_range          = "*"
         destination_port_range     = "22"
-        source_address_prefix      = "*" # Replace "*" with your IP or CIDR for better security
+        source_address_prefix      = "*" 
         destination_address_prefix = "*"
       },
       {
@@ -101,7 +101,7 @@ vms = {
         protocol                   = "*"
         source_port_range          = "*"
         destination_port_range     = "*"
-        source_address_prefix      = "VirtualNetwork" // Allows all traffic from within the VNet
+        source_address_prefix      = "VirtualNetwork" 
         destination_address_prefix = "VirtualNetwork"
       }
     ]
@@ -130,7 +130,7 @@ vms = {
 #     protocol                   = "Tcp"
 #     source_port_range          = "*"
 #     destination_port_range     = "22"
-#     source_address_prefix      = "*" # Replace "*" with your IP or CIDR for better security
+#     source_address_prefix      = "*" 
 #     destination_address_prefix = "*"
 #   },
 #   {
@@ -152,7 +152,7 @@ vms = {
 #     protocol                   = "*"
 #     source_port_range          = "*"
 #     destination_port_range     = "*"
-#     source_address_prefix      = "VirtualNetwork" // Allows all traffic from within the VNet
+#     source_address_prefix      = "VirtualNetwork" 
 #     destination_address_prefix = "VirtualNetwork"
 #   }
 # ]
