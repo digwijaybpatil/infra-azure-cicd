@@ -27,18 +27,18 @@ variable "sku_name" {
 variable "purge_protection_enabled" {
   description = "Whether purge protection is enabled for this Key Vault."
   type        = bool
-  default     = true  # ✅ required for production-grade resilience
+  default     = true  
 }
 
 variable "soft_delete_retention_days" {
   description = "Soft delete data retention in days."
   type        = number
-  default     = 90  # ✅ Azure recommends 90 days for compliance
+  default     = 7 
 }
 
 variable "rbac_authorization_enabled" {
   description = "Enable role-based access control for this Key Vault."
   type        = bool
-  default     = true  # ✅ use RBAC instead of access policies for cleaner management
+  default     = true 
 }
 

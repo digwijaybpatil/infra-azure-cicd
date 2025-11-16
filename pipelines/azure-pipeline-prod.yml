@@ -1,7 +1,3 @@
-# =============================
-# Prod Deployment Pipeline
-# =============================
-
 trigger: none
 
 pool:
@@ -59,7 +55,7 @@ stages:
     jobs:
       - deployment: ApplyProd
         displayName: "Apply Terraform Changes (Prod)"
-        environment: "Production" # Add manual approval in DevOps UI
+        environment: "Production" #Manual approval added in the ADO portal
         strategy:
           runOnce:
             deploy:
