@@ -264,6 +264,7 @@ module "mysql_server" {
   backup_retention_days = each.value.backup_retention_days
 
   delegated_subnet_id = module.snet["data"].snet_id
+  private_dns_zone_id = module.mysql_private_dns_zone.id
 
   depends_on = [module.vnet, module.snet]
 }
@@ -274,5 +275,21 @@ module "mysql_database" {
   database_name       = each.value.database_name
   resource_group_name = module.rg.resource_group_name
   server_name         = module.mysql_server[each.value.server_key].name
+}
+
+
+module "mysql_private_dns_zone" {
+  source              = "./modules/azurerm_private_dns_zone"
+  name                = "privatelink.mysql.database.azure.com"
+  resource_group_name = module.rg.resource_group_name
+}
+
+module "mysql_dns_vnet_link" {
+  source                = "./modules/azurerm_private_dns_zone_vnet_link"
+  link_name             = "mysql-vnet-link-${var.application_name}-${var.environment}"
+  resource_group_name   = module.rg.resource_group_name
+  private_dns_zone_name = module.mysql_private_dns_zone.name
+  virtual_network_id    = module.vnet.vnet_id
+  depends_on            = [module.vnet, module.snet]
 }
 
