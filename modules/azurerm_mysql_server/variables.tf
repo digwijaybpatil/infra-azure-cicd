@@ -26,7 +26,7 @@ variable "sku_name" {
 
 variable "msversion" {
   type    = string
-  default = "8.0"
+  default = "8.0.21"
 }
 
 variable "backup_retention_days" {
