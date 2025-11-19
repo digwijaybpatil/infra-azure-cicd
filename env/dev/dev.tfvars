@@ -166,3 +166,12 @@ sql_servers = {
     minimum_tls_version      = "1.2"
   }
 }
+
+sql_databases = {
+  db1 = {
+    database_name = "appdb"
+    server_key    = "server1"
+    sku_name      = "Basic"
+    max_size_gb   = 2
+  }
+}

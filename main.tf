@@ -224,3 +224,10 @@ module "sql_server" {
   minimum_tls_version = each.value.minimum_tls_version
 
 }
+
+module "sql_db" {
+  for_each      = var.sql_databases
+  source        = "./modules/azurerm_mssql_database"
+  database_name = each.value.database_name
+  server_id     = module.sql_server[each.value.server_key].server_id
+}
