@@ -42,10 +42,7 @@ variable "private_dns_zone_id" {
   type = string
 }
 
-variable "public_network_access_enabled" {
-  type    = bool
-  default = false
-}
+
 
 
 

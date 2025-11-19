@@ -14,5 +14,5 @@ resource "azurerm_mysql_flexible_server" "this" {
   delegated_subnet_id = var.delegated_subnet_id
   private_dns_zone_id = var.private_dns_zone_id
 
-  public_network_access_enabled = var.public_network_access_enabled
+
 }
