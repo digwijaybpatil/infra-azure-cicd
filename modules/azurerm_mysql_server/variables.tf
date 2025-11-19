@@ -24,7 +24,7 @@ variable "sku_name" {
   default = "GP_Standard_D2ds_v4"
 }
 
-variable "version" {
+variable "msversion" {
   type    = string
   default = "8.0"
 }
