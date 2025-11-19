@@ -112,3 +112,13 @@ variable "sql_servers" {
     minimum_tls_version = optional(string)
   }))
 }
+
+variable "sql_databases" {
+  type = map(object({
+    database_name = string
+    server_key    = string
+    sku_name      = optional(string)
+    max_size_gb   = optional(number)
+    collation     = optional(string)
+  }))
+}
