@@ -3,7 +3,7 @@ environment = "prod"
 vnet_address_space = "10.39.0.0/22"
 
 vms = {
-  app-vm = {
+  appvm = {
     vm_size           = "Standard_B1s"
     vm_admin_username = "azureuser"
     subnet_name       = "app"
@@ -27,7 +27,7 @@ vms = {
         protocol                   = "Tcp"
         source_port_range          = "*"
         destination_port_range     = "22"
-        source_address_prefix      = "*" 
+        source_address_prefix      = "*"
         destination_address_prefix = "*"
       },
       {
@@ -49,13 +49,13 @@ vms = {
         protocol                   = "*"
         source_port_range          = "*"
         destination_port_range     = "*"
-        source_address_prefix      = "VirtualNetwork" 
+        source_address_prefix      = "VirtualNetwork"
         destination_address_prefix = "VirtualNetwork"
       }
     ]
   }
 
-  web-vm = {
+  webvm = {
     vm_size           = "Standard_B1s"
     vm_admin_username = "azureuser"
     subnet_name       = "web"
@@ -79,7 +79,7 @@ vms = {
         protocol                   = "Tcp"
         source_port_range          = "*"
         destination_port_range     = "22"
-        source_address_prefix      = "*" 
+        source_address_prefix      = "*"
         destination_address_prefix = "*"
       },
       {
@@ -101,7 +101,7 @@ vms = {
         protocol                   = "*"
         source_port_range          = "*"
         destination_port_range     = "*"
-        source_address_prefix      = "VirtualNetwork" 
+        source_address_prefix      = "VirtualNetwork"
         destination_address_prefix = "VirtualNetwork"
       }
     ]
@@ -155,3 +155,13 @@ vms = {
 #     destination_address_prefix = "VirtualNetwork"
 #   }
 # ]
+
+sql_servers = {
+  server1 = {
+    sql_server_name          = "dbserver"
+    sql_admin_username       = "sqladmin"
+    sql_password_secret_name = "sql-admin-password"
+    server_version           = "12.0"
+    minimum_tls_version      = "1.2"
+  }
+}

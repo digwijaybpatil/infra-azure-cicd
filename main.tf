@@ -4,11 +4,11 @@ module "rg" {
   location = var.primary_location
 }
 
-module "rg1" {
-  source   = "./modules/azurerm_resource_group"
-  name     = "rg1-${var.application_name}-${var.environment}"
-  location = var.secondary_location
-}
+# module "rg1" {
+#   source   = "./modules/azurerm_resource_group"
+#   name     = "rg1-${var.application_name}-${var.environment}"
+#   location = var.secondary_location
+# }
 
 module "vnet" {
   source              = "./modules/azurerm_virtual_network"
@@ -114,56 +114,67 @@ module "nic_nsg_association" {
   network_security_group_id = module.nsg_vm[each.key].nsg_id
 }
 
-# # module "bastion_host" {
-# #   source                = "./modules/azurerm_bastion_host"
-# #   name                  = "bastion-${var.application_name}-${var.environment}"
-# #   location              = module.rg.resource_group_location
-# #   resource_group_name   = module.rg.resource_group_name
-# #   ip_configuration_name = "bastion-ipconfig"
-# #   subnet_id             = module.snet["AzureBastionSubnet"].snet_id
-# #   public_ip_address_id  = module.pip_bastion.pip_id
-# # }
+# module "bastion_host" {
+#   source                = "./modules/azurerm_bastion_host"
+#   name                  = "bastion-${var.application_name}-${var.environment}"
+#   location              = module.rg.resource_group_location
+#   resource_group_name   = module.rg.resource_group_name
+#   ip_configuration_name = "bastion-ipconfig"
+#   subnet_id             = module.snet["AzureBastionSubnet"].snet_id
+#   public_ip_address_id  = module.pip_bastion.pip_id
+# }
 
-data "azurerm_client_config" "current" {
+# data "azurerm_client_config" "current" {
 
+# }
+
+# module "kv" {
+#   source                     = "./modules/azurerm_key_vault"
+#   name                       = "kv-${var.application_name}-${var.environment}"
+#   location                   = module.rg.resource_group_location
+#   resource_group_name        = module.rg.resource_group_name
+#   tenant_id                  = data.azurerm_client_config.current.tenant_id
+#   sku_name                   = "standard"
+#   purge_protection_enabled   = false
+#   soft_delete_retention_days = 7
+#   rbac_authorization_enabled = true
+# }
+
+# module "role_kv_admin" {
+#   source               = "./modules/azurerm_role_assignment"
+#   scope                = module.kv.key_vault_id
+#   role_definition_name = "Key Vault Administrator"
+#   principal_id         = data.azurerm_client_config.current.object_id
+# }
+
+# resource "tls_private_key" "vm_key" {
+#   algorithm = "RSA"
+#   rsa_bits  = 4096
+# }
+
+# resource "azurerm_key_vault_secret" "vm_ssh_private_key" {
+#   depends_on   = [module.role_kv_admin]
+#   name         = "vm-ssh-private-key"
+#   value        = tls_private_key.vm_key.private_key_pem
+#   key_vault_id = module.kv.key_vault_id
+# }
+
+# resource "azurerm_key_vault_secret" "vm_ssh_public_key" {
+#   depends_on   = [module.role_kv_admin]
+#   name         = "vm-ssh-public-key"
+#   value        = tls_private_key.vm_key.public_key_openssh
+#   key_vault_id = module.kv.key_vault_id
+# }
+
+data "azurerm_key_vault" "kv_shared" {
+  name                = "kv-digwi-shared"
+  resource_group_name = "rg-digwi-shared-kv"
 }
 
-module "kv" {
-  source                     = "./modules/azurerm_key_vault"
-  name                       = "kv-${var.application_name}-${var.environment}"
-  location                   = module.rg.resource_group_location
-  resource_group_name        = module.rg.resource_group_name
-  tenant_id                  = data.azurerm_client_config.current.tenant_id
-  sku_name                   = "standard"
-  purge_protection_enabled   = false
-  soft_delete_retention_days = 7
-  rbac_authorization_enabled = true
-}
 
-module "role_kv_admin" {
-  source               = "./modules/azurerm_role_assignment"
-  scope                = module.kv.key_vault_id
-  role_definition_name = "Key Vault Administrator"
-  principal_id         = data.azurerm_client_config.current.object_id
-}
-
-resource "tls_private_key" "vm_key" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
-resource "azurerm_key_vault_secret" "vm_ssh_private_key" {
-  depends_on   = [module.role_kv_admin]
-  name         = "vm-ssh-private-key"
-  value        = tls_private_key.vm_key.private_key_pem
-  key_vault_id = module.kv.key_vault_id
-}
-
-resource "azurerm_key_vault_secret" "vm_ssh_public_key" {
-  depends_on   = [module.role_kv_admin]
+data "azurerm_key_vault_secret" "vm_ssh_public_key" {
   name         = "vm-ssh-public-key"
-  value        = tls_private_key.vm_key.public_key_openssh
-  key_vault_id = module.kv.key_vault_id
+  key_vault_id = data.azurerm_key_vault.kv_shared.id
 }
 
 
@@ -189,7 +200,27 @@ module "vm" {
   vm_size                = each.value.vm_size
   admin_username         = each.value.vm_admin_username
   network_interface_id   = module.nic_vm[each.key].nic_id
-  ssh_public_key         = tls_private_key.vm_key.public_key_openssh
+  ssh_public_key         = data.azurerm_key_vault_secret.vm_ssh_public_key.value
   source_image_reference = each.value.source_image_reference
   os_disk                = each.value.os_disk
+}
+
+
+data "azurerm_key_vault_secret" "sql_admin_password" {
+  for_each     = var.sql_servers
+  name         = each.value.sql_password_secret_name
+  key_vault_id = data.azurerm_key_vault.kv_shared.id
+}
+
+module "sql_server" {
+  for_each            = var.sql_servers
+  source              = "./modules/azurerm_mssql_server"
+  sql_server_name     = "${each.value.sql_server_name}${var.application_name}${var.environment}"
+  resource_group_name = module.rg.resource_group_name
+  server_location     = module.rg.resource_group_location
+  server_version      = each.value.server_version
+  sql_admin_username  = each.value.sql_admin_username
+  sql_admin_password  = data.azurerm_key_vault_secret.sql_admin_password[each.key].value
+  minimum_tls_version = each.value.minimum_tls_version
+
 }
