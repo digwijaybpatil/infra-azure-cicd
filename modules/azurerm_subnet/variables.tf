@@ -17,3 +17,9 @@ variable "address_prefixes" {
   type        = list(string)
   description = "address_prefixes for snet"
 }
+
+variable "delegation" {
+  type = any
+  default = null
+}
+
