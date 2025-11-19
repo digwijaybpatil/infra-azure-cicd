@@ -159,8 +159,8 @@ vms = {
 
 sql_servers = {
   server1 = {
-    sql_server_name          = "dbserver"
-    sql_admin_username       = "sqladmin"
+    sql_server_name          = "mssqldbserver"
+    sql_admin_username       = "mssqladmin"
     sql_password_secret_name = "sql-admin-password"
     server_version           = "12.0"
     minimum_tls_version      = "1.2"
@@ -169,9 +169,27 @@ sql_servers = {
 
 sql_databases = {
   db1 = {
-    database_name = "appdb"
+    database_name = "appmssqldb"
     server_key    = "server1"
     sku_name      = "Basic"
     max_size_gb   = 2
+  }
+}
+
+mysql_servers = {
+  appmysqlserver1 = {
+    mysql_server_name     = "mysqldbserver"
+    admin_username        = "mysqladmin"
+    password_secret_name  = "sql-admin-password"
+    sku_name              = "GP_Standard_D2ds_v4"
+    version               = "8.0"
+    backup_retention_days = 7
+  }
+}
+
+mysql_databases = {
+  appdb = {
+    database_name = "appmysqldb"
+    server_key    = "appmysqlserver1"
   }
 }
