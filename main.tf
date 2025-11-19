@@ -34,6 +34,16 @@ module "snet" {
   virtual_network_name = module.vnet.vnet_name
   resource_group_name  = module.rg.resource_group_name
   address_prefixes     = [each.value]
+
+  delegation = (
+    each.key == "data"
+    ? {
+      name         = "mysql-delegation"
+      service_name = "Microsoft.DBforMySQL/flexibleServers"
+      actions      = ["Microsoft.Network/virtualNetworks/subnets/action"]
+    }
+    : null
+  )
 }
 
 # module "pip_bastion" {
@@ -249,8 +259,8 @@ module "mysql_server" {
   admin_username = each.value.admin_username
   admin_password = data.azurerm_key_vault_secret.mysql_admin_password[each.key].value
 
-  sku_name              = each.value.sku_name
-  
+  sku_name = each.value.sku_name
+
   backup_retention_days = each.value.backup_retention_days
 
   delegated_subnet_id = module.snet["data"].snet_id
