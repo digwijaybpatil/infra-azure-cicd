@@ -266,7 +266,8 @@ module "mysql_server" {
   delegated_subnet_id = module.snet["data"].snet_id
   private_dns_zone_id = module.mysql_private_dns_zone.id
 
-  depends_on = [module.vnet, module.snet]
+  depends_on = [module.vnet, module.snet, module.mysql_private_dns_zone,
+  module.mysql_dns_vnet_link]
 }
 
 module "mysql_database" {
