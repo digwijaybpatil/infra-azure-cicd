@@ -10,7 +10,7 @@ variable "primary_location" {
 }
 
 variable "secondary_location" {
-  type = string
+  type        = string
   description = "secondary location"
 }
 
@@ -27,20 +27,20 @@ variable "vnet_address_space" {
 
 variable "vms" {
   type = map(object({
-    vm_size = string
+    vm_size           = string
     vm_admin_username = string
-    subnet_name = string
+    subnet_name       = string
     public_ip_enabled = optional(bool, false)
     source_image_reference = object({
       publisher = string
-      offer = string
-      sku = string
-      version = string 
+      offer     = string
+      sku       = string
+      version   = string
     })
     os_disk = object({
-      caching = string
+      caching              = string
       storage_account_type = string
-      disk_size_gb = optional(number) 
+      disk_size_gb         = optional(number)
     })
     security_rules = list(object({
       name                       = string
@@ -54,7 +54,7 @@ variable "vms" {
       destination_address_prefix = string
     }))
   }))
-  
+
 }
 
 # variable "vm_size" {
@@ -105,11 +105,11 @@ variable "vms" {
 
 variable "sql_servers" {
   type = map(object({
-    sql_server_name = string
-    sql_admin_username = string
+    sql_server_name          = string
+    sql_admin_username       = string
     sql_password_secret_name = string
-    server_version = optional(string)
-    minimum_tls_version = optional(string)
+    server_version           = optional(string)
+    minimum_tls_version      = optional(string)
   }))
 }
 
@@ -120,5 +120,25 @@ variable "sql_databases" {
     sku_name      = optional(string)
     max_size_gb   = optional(number)
     collation     = optional(string)
+  }))
+}
+
+
+variable "mysql_servers" {
+  type = map(object({
+    mysql_server_name    = string
+    admin_username       = string
+    password_secret_name = string
+
+    sku_name              = optional(string, "GP_Standard_D2ds_v4")
+    version               = optional(string, "8.0")
+    backup_retention_days = optional(number, 7)
+  }))
+}
+
+variable "mysql_databases" {
+  type = map(object({
+    database_name = string
+    server_key    = string # key of mysql_server map
   }))
 }

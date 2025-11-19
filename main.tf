@@ -206,28 +206,63 @@ module "vm" {
 }
 
 
-data "azurerm_key_vault_secret" "sql_admin_password" {
-  for_each     = var.sql_servers
-  name         = each.value.sql_password_secret_name
+# data "azurerm_key_vault_secret" "sql_admin_password" {
+#   for_each     = var.sql_servers
+#   name         = each.value.sql_password_secret_name
+#   key_vault_id = data.azurerm_key_vault.kv_shared.id
+# }
+
+# module "sql_server" {
+#   for_each            = var.sql_servers
+#   source              = "./modules/azurerm_mssql_server"
+#   sql_server_name     = "${each.value.sql_server_name}${var.application_name}${var.environment}"
+#   resource_group_name = module.rg.resource_group_name
+#   server_location     = module.rg.resource_group_location
+#   server_version      = each.value.server_version
+#   sql_admin_username  = each.value.sql_admin_username
+#   sql_admin_password  = data.azurerm_key_vault_secret.sql_admin_password[each.key].value
+#   minimum_tls_version = each.value.minimum_tls_version
+
+# }
+
+# module "sql_db" {
+#   for_each      = var.sql_databases
+#   source        = "./modules/azurerm_mssql_database"
+#   database_name = each.value.database_name
+#   server_id     = module.sql_server[each.value.server_key].server_id
+# }
+
+data "azurerm_key_vault_secret" "mysql_admin_password" {
+  for_each     = var.mysql_servers
+  name         = each.value.password_secret_name
   key_vault_id = data.azurerm_key_vault.kv_shared.id
 }
 
-module "sql_server" {
-  for_each            = var.sql_servers
-  source              = "./modules/azurerm_mssql_server"
-  sql_server_name     = "${each.value.sql_server_name}${var.application_name}${var.environment}"
+module "mysql_server" {
+  for_each = var.mysql_servers
+  source   = "./modules/azurerm_mysql_server"
+
+  mysql_server_name   = "${each.value.mysql_server_name}${var.application_name}${var.environment}"
   resource_group_name = module.rg.resource_group_name
-  server_location     = module.rg.resource_group_location
-  server_version      = each.value.server_version
-  sql_admin_username  = each.value.sql_admin_username
-  sql_admin_password  = data.azurerm_key_vault_secret.sql_admin_password[each.key].value
-  minimum_tls_version = each.value.minimum_tls_version
+  location            = module.rg.resource_group_location
 
+  admin_username = each.value.admin_username
+  admin_password = data.azurerm_key_vault_secret.mysql_admin_password[each.key].value
+
+  sku_name              = each.value.sku_name
+  
+  backup_retention_days = each.value.backup_retention_days
+
+  delegated_subnet_id = module.snet["data"].snet_id
+
+  depends_on = [module.vnet, module.snet]
 }
 
-module "sql_db" {
-  for_each      = var.sql_databases
-  source        = "./modules/azurerm_mssql_database"
-  database_name = each.value.database_name
-  server_id     = module.sql_server[each.value.server_key].server_id
+module "mysql_database" {
+  for_each            = var.mysql_databases
+  source              = "./modules/azurerm_mysql_database"
+  database_name       = each.value.database_name
+  resource_group_name = module.rg.resource_group_name
+  server_name         = module.mysql_server[each.value.server_key].name
 }
+
