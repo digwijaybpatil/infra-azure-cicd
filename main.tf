@@ -250,7 +250,7 @@ module "mysql_server" {
   admin_password = data.azurerm_key_vault_secret.mysql_admin_password[each.key].value
 
   sku_name              = each.value.sku_name
-  version               = each.value.version
+  
   backup_retention_days = each.value.backup_retention_days
 
   delegated_subnet_id = module.snet["data"].snet_id
