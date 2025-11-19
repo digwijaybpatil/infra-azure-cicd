@@ -189,7 +189,7 @@ mysql_servers = {
 
 mysql_databases = {
   appdb = {
-    database_name = "appmysqldb"
+    database_name = "elearn"
     server_key    = "appmysqlserver1"
   }
 }
