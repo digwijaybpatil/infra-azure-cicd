@@ -1,4 +1,4 @@
-application_name = "digwi-infra"
+application_name = "digwiinfra"
 
 primary_location = "central india"
 

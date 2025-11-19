@@ -102,3 +102,13 @@ variable "vms" {
 #   description = "list of security rules to be created in nsg"
 # }
 
+
+variable "sql_servers" {
+  type = map(object({
+    sql_server_name = string
+    sql_admin_username = string
+    sql_password_secret_name = string
+    server_version = optional(string)
+    minimum_tls_version = optional(string)
+  }))
+}
