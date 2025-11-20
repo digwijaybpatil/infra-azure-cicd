@@ -40,7 +40,7 @@ module "snet" {
     ? {
       name         = "mysql-delegation"
       service_name = "Microsoft.DBforMySQL/flexibleServers"
-      actions      = ["Microsoft.Network/virtualNetworks/subnets/action"]
+      actions      = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
     }
     : null
   )
